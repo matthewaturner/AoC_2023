@@ -6,10 +6,6 @@ if len(sys.argv) != 2:
     sys.exit(1)
 filename = sys.argv[1]
 
-MAX_RED = 12
-MAX_BLUE = 14
-MAX_GREEN = 13
-
 def get_max_counts(line):
     max_counts = {}
     pattern = "(\d+) (\w+)"
