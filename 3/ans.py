@@ -15,18 +15,35 @@ import re
 TEXT = []
 TOTAL_ROWS = 0
 TOTAL_COLS = 0
+GEARS = {}
 
-# select the outer box of symbols around the part number
-def is_part_number(part_result):
+# Similar to code in previous answer, but now we are interested in mapping only the * symbols.
+# We find all gears next to each part number then indentify gears by their i,j coordinates
+# and store the list of parts next to them in the global GEARS dict.
+def map_gears(part_result):
     i = part_result[1][0]
     j = part_result[1][1]
     length = part_result[2]
-    lines = TEXT[max(i-1, 0):min(i+2, TOTAL_ROWS)]
+
+    start_i = max(i-1, 0)
+    end_i   = min(i+2, TOTAL_ROWS)
+    start_j = max(j-1, 0)
+    end_j   = min(j+1+length, TOTAL_COLS)
+
+    lines = TEXT[start_i:end_i]
     for l in range(len(lines)):
-        lines[l] = lines[l][max(j-1, 0):min(j+1+length, TOTAL_COLS)]
+        lines[l] = lines[l][start_j:end_j]
         print(lines[l])
-    pattern = "[^0-9\.\s]" # all symbols
-    return bool(re.search(pattern, ''.join(lines)))
+
+    pattern = "\*" # all gears
+    for l in range(len(lines)):
+        for g in re.finditer(pattern, lines[l]):
+            gear_key = (start_i+l, start_j+g.start())
+            print(f"Found gear at: {gear_key}")
+            if gear_key in GEARS:
+                GEARS[gear_key].append(int(part_result[0]))
+            else:
+                GEARS[gear_key] = [int(part_result[0])]
 
 # select all part numbers, with their i,j coordinates and length
 def get_all_numbers():
@@ -45,7 +62,6 @@ def read_all_text():
     TOTAL_ROWS = len(TEXT)
     TOTAL_COLS = len(TEXT[0])
     
-
 # main loop
 if __name__ == "__main__":
     arguments = docopt.docopt(__doc__)
@@ -56,8 +72,12 @@ if __name__ == "__main__":
     numbers = get_all_numbers()
     for n in numbers:
         print(n)
-        if is_part_number(n):
-            print("IS PART NUMBER")
-            sum += int(n[0])
-    print(f"Sum: {sum}")
+        map_gears(n)
+
+    for k, v in GEARS.items():
+        if (len(v) == 2):
+            print(f"Found pair: {k} -> {v}")
+            sum += v[0] * v[1]
+    
+    print(sum)
 
